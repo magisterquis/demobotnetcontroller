@@ -4,7 +4,7 @@
 # Make sure our code is up-to-date and doesn't have debug things.
 # By J. Stuart McMurray
 # Created 20251029
-# Last Modified 20251029
+# Last Modified 20251031
 
 set -euo pipefail
 
@@ -33,11 +33,11 @@ tap_like \
         "$0" $LINENO
 
 # Extract useful info
-SPID=$(  echo -E "$REPLY" | jq --raw-output '.PID')
-ADDR=$(  echo -E "$REPLY" | jq --raw-output '.address')
-FP=$(    echo -E "$REPLY" | jq --raw-output '.fingerprint')
-PREFIX=$(echo -E "$REPLY" | jq --raw-output '.prefix')
-DIR=$(   echo -E "$REPLY" | jq --raw-output '.directory')
+SPID=$(  print -r "$REPLY" | jq --raw-output '.PID')
+ADDR=$(  print -r "$REPLY" | jq --raw-output '.address')
+FP=$(    print -r "$REPLY" | jq --raw-output '.fingerprint')
+PREFIX=$(print -r "$REPLY" | jq --raw-output '.prefix')
+DIR=$(   print -r "$REPLY" | jq --raw-output '.directory')
 tap_like "$SPID"   '^\d+$'                "PID is numeric"       "$0" $LINENO
 tap_like "$ADDR"   '^127.0.0.1:\d+$'      "Address looks ok"     "$0" $LINENO
 tap_like "$FP"     '^[A-Za-z0-9+/]{43}=$' "Fingerprint looks ok" "$0" $LINENO
