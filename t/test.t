@@ -1,7 +1,7 @@
 #!/bin/ksh
 #
 # basic_tests.t
-# Make sure our code is up-to-date and doesn't have debug things.
+# Make sure basic features work
 # By J. Stuart McMurray
 # Created 20251029
 # Last Modified 20251031
@@ -44,22 +44,18 @@ tap_like "$FP"     '^[A-Za-z0-9+/]{43}=$' "Fingerprint looks ok" "$0" $LINENO
 tap_is   "$PREFIX" "/P-$RNUM/"            "Prefix is correct"    "$0" $LINENO
 tap_is   "$DIR"    "$TMPD"                "Directory is correct" "$0" $LINENO
 
-# request makes a request to the server with curl, checks if the request
-# succeeded, stores the next log line in $LOG, and the response in $RESPONSE.
+# request makes a curl request.
 #
 # Arguments:
 # $@ - Arguments to pass to curl
-request() {
-        # Make the request.
+function request {
         curl \
-                --silent \
                 --insecure \
                 --pinnedpubkey "sha256//$FP" \
+                --show-error \
+                --silent \
                 "https://${ADDR}${PREFIX}${ID}" \
                 "$@"
-
-        # Get the log line.
-        read -pr LOG
 }
 
 # Directory should only have the TLS fingerprint.
@@ -122,8 +118,6 @@ tap_is "$?"   0  "Curl piped to sh piped to curl exited happily" "$0" $LINENO
 tap_is "$GOT" "" "No response to curl piped to sh piped to curl" "$0" $LINENO
 GOT=$(<"$OUTF")
 tap_is "$GOT" "$TRAND" "Command output correct" "$0" $LINENO
-
-
 
 # Stop the server.
 kill "$SPID"
