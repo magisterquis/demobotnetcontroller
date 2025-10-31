@@ -70,9 +70,9 @@ tap_is "$GOT" "$WANT" "Directory starts with only the fingerprint" "$0" $LINENO
 # Make a request for tasking and we should sprout an empty output file.
 GOT=$(request)
 tap_is "$GOT" "" "Got no task without a tasking file" "$0" $LINENO
-GOT=$(ls $DIR)
-WANT="${ID}_out
-_tls_fingerprint"
+GOT=$(ls $DIR | sort)
+WANT=$(print -r "${ID}_out
+_tls_fingerprint" | sort)
 tap_is "$GOT" "$WANT" "Empty tasking created output file" "$0" $LINENO
 rm "$OUTF"
 
