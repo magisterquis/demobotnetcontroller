@@ -253,15 +253,15 @@ func (h handler) getIDAndLogger(r *http.Request) (string, *slog.Logger) {
 		/* New implant. */
 		if f, err := h.root.OpenFile(
 			fn,
-			os.O_CREATE|os.O_RDONLY,
+			os.O_CREATE|os.O_EXCL|os.O_RDONLY,
 			0660,
-		); nil != err {
+		); nil != err && !errors.Is(err, os.ErrExist) {
 			sl.Error(
 				"Could not create output file",
 				"filename", fn,
 				"error", err,
 			)
-		} else {
+		} else if nil == err {
 			f.Close()
 			sl.Info("New ID")
 		}
