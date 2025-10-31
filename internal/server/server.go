@@ -6,7 +6,7 @@ package server
  * Core server code
  * By J. Stuart McMurray
  * Created 20251030
- * Last Modified 20251030
+ * Last Modified 20251031
  */
 
 import (
@@ -126,30 +126,6 @@ func (h handler) handleTasking(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	/* Note we've seen this one. */
-	var (
-		fn  = id + OutputSuffix
-		now = time.Now()
-	)
-	if err := h.root.Chtimes(fn, now, now); errors.Is(err, os.ErrNotExist) {
-		f, err := h.root.OpenFile(fn, os.O_CREATE|os.O_RDONLY, 0660)
-		if nil != err {
-			sl.Error(
-				"Could not create output file",
-				"filename", fn,
-				"error", err,
-			)
-		}
-		f.Close()
-	} else if nil != err {
-		sl.Error(
-			"Could not update output file mtime "+
-				"on tasking request",
-			"filename", fn,
-			"time", now.Format(time.RFC3339),
-		)
-	}
-
 	/* File with tasking, maybe. */
 	f, err := h.root.Open(id)
 	if errors.Is(err, os.ErrNotExist) {
@@ -216,19 +192,6 @@ func (h handler) handleOutput(w http.ResponseWriter, r *http.Request) {
 	n, err := io.Copy(f, r.Body)
 	sl = sl.With("size", n)
 
-	/* If we didn't actually save anything, still update the mtime. */
-	if 0 == n {
-		now := time.Now()
-		if err := h.root.Chtimes(fn, now, now); nil != err {
-			sl.Error(
-				"Could not update output file mtime",
-				"filename", fn,
-				"time", now.Format(time.RFC3339),
-				"error", err,
-			)
-		}
-	}
-
 	/* Log what we did. */
 	lf := sl.Info
 	if nil != err {
@@ -242,8 +205,7 @@ func (h handler) handleOutput(w http.ResponseWriter, r *http.Request) {
 
 // getIDAndLogger gets the last part of the path in r and makes sure it's only
 // letters, digits, hyphens, and dots.
-// If it's ok, the ID and an updated logger is returned.
-// If not, a message is logged and an empty ID is returned.
+// The ID's output file is touched and a log generated if the file was created.
 func (h handler) getIDAndLogger(r *http.Request) (string, *slog.Logger) {
 	/* Logger with request info. */
 	raddr := r.RemoteAddr
@@ -262,6 +224,7 @@ func (h handler) getIDAndLogger(r *http.Request) (string, *slog.Logger) {
 			"user_agent", r.UserAgent(),
 		),
 	)
+
 	/* Get and check the ID. */
 	id := r.PathValue(idParam)
 	if rind := strings.LastIndex(id, "/"); -1 != rind {
@@ -275,6 +238,41 @@ func (h handler) getIDAndLogger(r *http.Request) (string, *slog.Logger) {
 		sl.Warn("Invalid ID")
 		return "", nil
 	}
+	sl = sl.With("id", id)
 
-	return id, sl.With("id", id)
+	/* Touch the output file. */
+	var (
+		fn  = id + OutputSuffix
+		now = time.Now()
+	)
+	if err := h.root.Chtimes(
+		fn,
+		time.Time{},
+		now,
+	); errors.Is(err, os.ErrNotExist) {
+		/* New implant. */
+		if f, err := h.root.OpenFile(
+			fn,
+			os.O_CREATE|os.O_RDONLY,
+			0660,
+		); nil != err {
+			sl.Error(
+				"Could not create output file",
+				"filename", fn,
+				"error", err,
+			)
+		} else {
+			f.Close()
+			sl.Info("New ID")
+		}
+	} else if nil != err {
+		sl.Error(
+			"Could not update output file mtime",
+			"filename", fn,
+			"time", now.Format(time.RFC3339),
+			"error", err,
+		)
+	}
+
+	return id, sl
 }

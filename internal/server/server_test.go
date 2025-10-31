@@ -5,7 +5,7 @@ package server
  * Tests for server.go
  * By J. Stuart McMurray
  * Created 20251030
- * Last Modified 20251030
+ * Last Modified 20251031
  */
 
 import (
@@ -234,14 +234,25 @@ func TestServe_Output(t *testing.T) {
 			}
 
 			/* Should get a debug log. */
-			cl.ExpectEmpty(t, `{"time":"","level":"DEBUG",`+
-				`"msg":"Output","request":{`+
-				`"remote_address":"test_remote_addr",`+
-				`"method":"`+v+`",`+
-				`"host":"test_host",`+
-				`"request_uri":"/kittens/`+id+`",`+
-				`"user_agent":"Go-http-client/1.1"},`+
-				`"id":"`+id+`","size":0}`)
+			cl.ExpectEmpty(
+				t,
+				`{"time":"","level":"INFO",`+
+					`"msg":"New ID","request":{`+
+					`"remote_address":"test_remote_addr",`+
+					`"method":"`+v+`",`+
+					`"host":"test_host",`+
+					`"request_uri":"/kittens/`+id+`",`+
+					`"user_agent":"Go-http-client/1.1"},`+
+					`"id":"`+id+`"}`,
+				`{"time":"","level":"DEBUG",`+
+					`"msg":"Output","request":{`+
+					`"remote_address":"test_remote_addr",`+
+					`"method":"`+v+`",`+
+					`"host":"test_host",`+
+					`"request_uri":"/kittens/`+id+`",`+
+					`"user_agent":"Go-http-client/1.1"},`+
+					`"id":"`+id+`","size":0}`,
+			)
 		})
 
 		/* Not empty output. */
@@ -292,9 +303,17 @@ func TestServe_Output(t *testing.T) {
 				)
 			}
 			/* Should get logs. */
-			wantLogs := make([]string, len(outputs))
+			wantLogs := make([]string, 1+len(outputs))
+			wantLogs[0] = `{"time":"","level":"INFO",` +
+				`"msg":"New ID","request":{` +
+				`"remote_address":"test_remote_addr",` +
+				`"method":"` + v + `",` +
+				`"host":"test_host",` +
+				`"request_uri":"/kittens/` + id + `",` +
+				`"user_agent":"Go-http-client/1.1"},` +
+				`"id":"` + id + `"}`
 			for i, o := range outputs {
-				wantLogs[i] = `{"time":"","level":"INFO",` +
+				wantLogs[i+1] = `{"time":"","level":"INFO",` +
 					`"msg":"Output","request":{` +
 					`"remote_address":"test_remote_addr",` +
 					`"method":"` + v + `",` +
@@ -409,6 +428,12 @@ func TestServe_Tasking(t *testing.T) {
 	/* Log-checking. */
 	lf.ExpectEmpty(
 		t,
+		`{"time":"","level":"INFO","msg":"New ID","request":{`+
+			`"remote_address":"test_remote_addr","method":"GET",`+
+			`"host":"test_host",`+
+			`"request_uri":"/kittens/`+id+`",`+
+			`"user_agent":"Go-http-client/1.1"},`+
+			`"id":"`+id+`"}`,
 		`{"time":"","level":"DEBUG","msg":"No tasking","request":{`+
 			`"remote_address":"test_remote_addr","method":"GET",`+
 			`"host":"test_host",`+
