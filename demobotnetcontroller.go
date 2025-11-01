@@ -57,8 +57,8 @@ func main() {
 		)
 		botPrefix = flag.String(
 			"prefix",
-			"/demobotnet",
-			"HTTP path prefix for bots",
+			"/bots",
+			"HTTP URL path prefix for bots",
 		)
 	)
 	flag.Usage = func() {

