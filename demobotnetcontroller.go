@@ -6,7 +6,7 @@ package main
  * Demo-grade botnet controller
  * By J. Stuart McMurray
  * Created 20251029
- * Last Modified 20251029
+ * Last Modified 20251101
  */
 
 import (
@@ -71,8 +71,8 @@ Demo-grade botnet controller.
 - Comms over HTTP, GET for tasking, POST/PUT for output.
 - URL path must have the right prefix, last component is bot ID.
 - IDs must be [A-Za-z0-9-.]+
-- Tasking goes into files named after the bots' IDs.
-- Output will go to files named after the bots' IDs plus _out.
+- Tasking goes into files named after the bots' IDs plus _task.
+- Output will go to files named after the bots' IDs.
 - TLS Fingerprint (for --pinnedpubkey) is in _tls_fingerprint.
 
 Options:

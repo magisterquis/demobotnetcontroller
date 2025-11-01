@@ -5,7 +5,7 @@ package server
  * Tests for server.go
  * By J. Stuart McMurray
  * Created 20251030
- * Last Modified 20251031
+ * Last Modified 20251101
  */
 
 import (
@@ -214,7 +214,7 @@ func TestServe_Output(t *testing.T) {
 		/* Empty output. */
 		t.Run("empty/"+v, func(t *testing.T) {
 			id := fmt.Sprintf("empty-%d", rand.Uint64())
-			fn := id + OutputSuffix
+			fn := id
 			/* Send the not-output. */
 			got := request(t, v, u+id, nil)
 			if 0 != len(got) {
@@ -258,7 +258,7 @@ func TestServe_Output(t *testing.T) {
 		/* Not empty output. */
 		t.Run("not_empty/"+v, func(t *testing.T) {
 			id := fmt.Sprintf("not-empty-%d", rand.Uint64())
-			fn := id + OutputSuffix
+			fn := id
 			outputs := []string{
 				"Start of output:\n",
 				fmt.Sprintf("output: %d\n", rand.Uint64()),
@@ -333,7 +333,7 @@ func TestServe_EmptyOutputFileTimestamp(t *testing.T) {
 	_, u, root := newTestServer(t)
 	id := fmt.Sprintf("ts-%d", rand.Uint64())
 	u = u + id
-	fn := id + OutputSuffix
+	fn := id
 
 	/* First output should make a file. */
 	request(t, http.MethodPost, u, nil)
@@ -363,7 +363,8 @@ func TestServe_Tasking(t *testing.T) {
 	lf, u, root := newTestServer(t)
 	id := fmt.Sprintf("t-%d", rand.Uint64())
 	u = u + id
-	ofn := id + OutputSuffix
+	ofn := id
+	tfn := id + TaskingSuffix
 
 	/* No tasking should be easy. */
 	if got := request(t, http.MethodGet, u, nil); 0 != len(got) {
@@ -385,8 +386,8 @@ func TestServe_Tasking(t *testing.T) {
 
 	/* Make and send some tasking. */
 	task := fmt.Sprintf("Task: %d", rand.Uint64())
-	if err := root.WriteFile(id, []byte(task), 0660); nil != err {
-		t.Fatalf("Error writing tasking file %s: %s", id, err)
+	if err := root.WriteFile(tfn, []byte(task), 0660); nil != err {
+		t.Fatalf("Error writing tasking file %s: %s", tfn, err)
 	}
 	if got, want := string(request(t, http.MethodGet, u, nil)),
 		task; got != want {
@@ -394,15 +395,15 @@ func TestServe_Tasking(t *testing.T) {
 	}
 
 	/* Make sure file's gone. */
-	if _, err := root.Stat(id); nil != err &&
+	if _, err := root.Stat(tfn); nil != err &&
 		!errors.Is(err, os.ErrNotExist) {
 		t.Errorf(
 			"Error checking if tasking file %s exists: %s",
-			id,
+			tfn,
 			err,
 		)
 	} else if nil == err {
-		t.Errorf("Tasking file %s still exists", id)
+		t.Errorf("Tasking file %s still exists", tfn)
 	}
 
 	/* Output file should update. */

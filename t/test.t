@@ -4,7 +4,7 @@
 # Make sure basic features work
 # By J. Stuart McMurray
 # Created 20251029
-# Last Modified 20251031
+# Last Modified 20251101
 
 set -euo pipefail
 
@@ -15,7 +15,8 @@ tap_plan 22
 RNUM=$RANDOM
 ID=I-$RNUM
 TMPD=$(mktemp -d)
-OUTF=$TMPD/${ID}_out
+OUTF=$TMPD/${ID}
+TASKF=$TMPD/${ID}_task
 trap 'rm -rf "$TMPD"; tap_done_testing' EXIT
 
 
@@ -66,19 +67,19 @@ tap_is "$GOT" "$WANT" "Directory starts with only the fingerprint" "$0" $LINENO
 # Make a request for tasking and we should sprout an empty output file.
 GOT=$(request)
 tap_is "$GOT" "" "Got no task without a tasking file" "$0" $LINENO
-GOT=$(ls $DIR | sort)
-WANT=$(print -r "${ID}_out
-_tls_fingerprint" | sort)
+GOT=$(find $DIR -mindepth 1 | sort)
+WANT=$(print -r "$OUTF
+${TMPD}/_tls_fingerprint" | sort)
 tap_is "$GOT" "$WANT" "Empty tasking created output file" "$0" $LINENO
 rm "$OUTF"
 
 # Make a request for tasking and we should get tasking.
 TASK="Task: $RANDOM"
-echo "$TASK" >"$TMPD/$ID"
+echo "$TASK" >"$TASKF"
 GOT=$(request)
 tap_is "$GOT" "$TASK" "Tasking correct" "$0" $LINENO
 set +e
-[[ -f "$TMPD/$ID" ]]
+[[ -f "$TASKF" ]]
 RET=$?
 set -e
 tap_isnt "$RET" "0" "Tasking file removed" "$0" $LINENO
@@ -112,7 +113,7 @@ rm "$OUTF"
 
 # Can we get a tasking and response?
 TRAND=$RANDOM
-echo "echo $TRAND" >"$TMPD/$ID"
+echo "echo $TRAND" >"$TASKF"
 GOT=$(request | sh | request -T-)
 tap_is "$?"   0  "Curl piped to sh piped to curl exited happily" "$0" $LINENO
 tap_is "$GOT" "" "No response to curl piped to sh piped to curl" "$0" $LINENO

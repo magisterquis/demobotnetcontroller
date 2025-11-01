@@ -6,7 +6,7 @@ package server
  * Core server code
  * By J. Stuart McMurray
  * Created 20251030
- * Last Modified 20251031
+ * Last Modified 20251101
  */
 
 import (
@@ -37,8 +37,8 @@ const IDAlphabet = "abcdefghikjlmnopqrstuvwxyz" +
 // idParam is the URL parameter containing the ID.
 const idParam = "id"
 
-// OutputSuffix is appended to an ID to form an output filename.
-const OutputSuffix = "_out"
+// TaskingSuffix is appended to an ID to form a tasking filename.
+const TaskingSuffix = "_task"
 
 // Serve serves bots on the given listener, using root as the root from which
 // to retrieve tasking and to which to store output.
@@ -117,8 +117,8 @@ type handler struct {
 }
 
 // handleTasking responds to a request for tasking with the contents of the
-// tasking file with the same name as the last path element of the request, if
-// it exists.
+// tasking file with the same name as the last path element of the request plus
+// _task, if it exists.
 func (h handler) handleTasking(w http.ResponseWriter, r *http.Request) {
 	id, sl := h.getIDAndLogger(r)
 	if "" == id { /* Don't tell it's not ok. */
@@ -127,23 +127,24 @@ func (h handler) handleTasking(w http.ResponseWriter, r *http.Request) {
 	}
 
 	/* File with tasking, maybe. */
-	f, err := h.root.Open(id)
+	fn := id + TaskingSuffix
+	f, err := h.root.Open(fn)
 	if errors.Is(err, os.ErrNotExist) {
 		sl.Debug("No tasking")
 		return
 	} else if nil != err {
 		sl.Error(
 			"Could not open tasking file",
-			"filename", id,
+			"filename", fn,
 			"error", err,
 		)
 		return
 	}
 	defer f.Close()
-	if err := h.root.Remove(id); nil != err {
+	if err := h.root.Remove(fn); nil != err {
 		sl.Error(
 			"Unable to remove tasking file",
-			"filename", id,
+			"filename", fn,
 			"error", err,
 		)
 		return
@@ -163,7 +164,7 @@ func (h handler) handleTasking(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleOutput appends the contents of the request body to the file with the
-// same name as the last path element of the request, plus _out.
+// same name as the last path element of the request.
 func (h handler) handleOutput(w http.ResponseWriter, r *http.Request) {
 	id, sl := h.getIDAndLogger(r)
 	if "" == id { /* Don't tell it's not ok. */
@@ -172,16 +173,15 @@ func (h handler) handleOutput(w http.ResponseWriter, r *http.Request) {
 	}
 
 	/* Open the output file and make sure it's updated. */
-	fn := id + OutputSuffix
 	f, err := h.root.OpenFile(
-		fn,
+		id,
 		os.O_CREATE|os.O_WRONLY|os.O_APPEND,
 		0660,
 	)
 	if nil != err {
 		sl.Error(
 			"Could not open output file",
-			"filename", fn,
+			"filename", id,
 			"error", err,
 		)
 		return
@@ -241,24 +241,21 @@ func (h handler) getIDAndLogger(r *http.Request) (string, *slog.Logger) {
 	sl = sl.With("id", id)
 
 	/* Touch the output file. */
-	var (
-		fn  = id + OutputSuffix
-		now = time.Now()
-	)
+	now := time.Now()
 	if err := h.root.Chtimes(
-		fn,
+		id,
 		time.Time{},
 		now,
 	); errors.Is(err, os.ErrNotExist) {
 		/* New implant. */
 		if f, err := h.root.OpenFile(
-			fn,
+			id,
 			os.O_CREATE|os.O_EXCL|os.O_RDONLY,
 			0660,
 		); nil != err && !errors.Is(err, os.ErrExist) {
 			sl.Error(
 				"Could not create output file",
-				"filename", fn,
+				"filename", id,
 				"error", err,
 			)
 		} else if nil == err {
@@ -268,7 +265,7 @@ func (h handler) getIDAndLogger(r *http.Request) (string, *slog.Logger) {
 	} else if nil != err {
 		sl.Error(
 			"Could not update output file mtime",
-			"filename", fn,
+			"filename", id,
 			"time", now.Format(time.RFC3339),
 			"error", err,
 		)

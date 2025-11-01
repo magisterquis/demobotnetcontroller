@@ -4,7 +4,7 @@
 # Make sure the New ID log logs
 # By J. Stuart McMurray
 # Created 20251031
-# Last Modified 20251031
+# Last Modified 20251101
 
 set -euo pipefail
 
@@ -14,8 +14,8 @@ tap_plan 14
 
 TMPD=$(mktemp -d)
 ID=I-$RANDOM
-OUTF=$TMPD/${ID}_out
-TASKF=$TMPD/${ID}
+OUTF=$TMPD/${ID}
+TASKF=$TMPD/${ID}_task
 PREFIX=$RANDOM
 trap 'rm -rf "$TMPD"; tap_done_testing' EXIT
 
