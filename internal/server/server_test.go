@@ -49,7 +49,7 @@ func newTestServer(t *testing.T) (chanlog.ChanLog, string, *os.Root) {
 	/* Start serving. */
 	ech := make(chan error, 1)
 	go func() {
-		ech <- Serve(t.Context(), sl, l, testPathPrefix, root)
+		ech <- Serve(t.Context(), sl, l, testPathPrefix, root, 0)
 	}()
 	t.Cleanup(func() {
 		if err := <-ech; nil != err {

@@ -115,4 +115,6 @@ Options:
     	Maximum run duration
   -prefix string
     	HTTP URL path prefix for bots (default "/bots")
+  -request-timeout timeout
+    	Per-request timeout (default 1m0s)
 ```

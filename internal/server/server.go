@@ -10,6 +10,7 @@ package server
  */
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"io"
@@ -24,10 +25,11 @@ import (
 	"github.com/magisterquis/curlrevshell/lib/ctxerrgroup"
 )
 
-// IOTimeout is more or less how long a request can last and how long an idle
-// connection can stay idle.  It's also how long we wait for the server to
-// terminate when the context comes done.
-const IOTimeout = time.Minute
+// DefaultIOTimeout is more or less how long a request can last and how long an
+// idle connection can stay idle, by default.
+// It's also how long we wait for the server to terminate when the context
+// comes done.
+const DefaultIOTimeout = time.Minute
 
 // IDAlphabet are the characters allowed in IDs.
 const IDAlphabet = "abcdefghikjlmnopqrstuvwxyz" +
@@ -48,6 +50,7 @@ func Serve(
 	l net.Listener,
 	prefix string,
 	root *os.Root,
+	ioTimeout time.Duration,
 ) error {
 	/* Set up routes. */
 	prefix = CleanPrefix(prefix)
@@ -63,9 +66,9 @@ func Serve(
 	/* Server, which requires the prefix. */
 	svr := http.Server{
 		Handler:      mux,
-		ReadTimeout:  IOTimeout,
-		WriteTimeout: IOTimeout,
-		IdleTimeout:  IOTimeout,
+		ReadTimeout:  cmp.Or(ioTimeout, DefaultIOTimeout),
+		WriteTimeout: cmp.Or(ioTimeout, DefaultIOTimeout),
+		IdleTimeout:  cmp.Or(ioTimeout, DefaultIOTimeout),
 		ErrorLog: slog.NewLogLogger(
 			slog.Default().Handler(),
 			slog.LevelDebug,
@@ -88,7 +91,7 @@ func Serve(
 		<-ctx.Done()
 		toCtx, cancel := context.WithTimeout(
 			context.Background(),
-			IOTimeout,
+			DefaultIOTimeout,
 		)
 		defer cancel()
 		return svr.Shutdown(toCtx)

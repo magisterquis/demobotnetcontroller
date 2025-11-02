@@ -19,6 +19,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"syscall"
+	"time"
 
 	"github.com/magisterquis/curlrevshell/lib/ctxerrgroup"
 	"github.com/magisterquis/curlrevshell/lib/pledgeunveil"
@@ -59,6 +60,11 @@ func main() {
 			"prefix",
 			"/bots",
 			"HTTP URL path prefix for bots",
+		)
+		requestTimeout = flag.Duration(
+			"request-timeout",
+			time.Minute,
+			"Per-request `timeout`",
 		)
 	)
 	flag.Usage = func() {
@@ -183,7 +189,7 @@ Options:
 		"prefix", prefix,
 	)
 	eg.GoContext(ctx, func(ctx context.Context) error {
-		return server.Serve(ctx, sl, l, prefix, root)
+		return server.Serve(ctx, sl, l, prefix, root, *requestTimeout)
 	})
 	eg.GoContext(ctx, func(ctx context.Context) error {
 		sigs := []os.Signal{os.Interrupt, syscall.SIGTERM}
